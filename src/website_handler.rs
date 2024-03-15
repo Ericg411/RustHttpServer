@@ -14,7 +14,18 @@ impl WebsiteHandler {
 
     fn read_file(&self, file_path: &str) -> Option<String> {
         let path = format!("{}/{}", self.public_path, file_path);
-        fs::read_to_string(path).ok()
+
+        match fs::canonicalize(path) {
+            Ok(path) => {
+                if path.starts_with(fs::canonicalize(&self.public_path).unwrap()) {
+                    fs::read_to_string(path).ok()
+                } else {
+                    println!("Directory Traversal Attack Attempted: {}", file_path);
+                    None
+                }
+            },
+            Err(_) => None
+        }
     }
 }
 
